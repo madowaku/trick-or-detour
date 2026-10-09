@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Trick or Detour — UI test fixture</title>
+  </head>
+  <body style="font: 16px/1.8 system-ui; padding: 30px; background: #102723; color: #f7e6bb">
+    <h1>UI test fixture</h1>
+    <p>Development only. Preserve the existing progress before testing later stages.</p>
+    <button id="seed" style="padding: 15px">Unlock stages for UI verification</button>
+    <button id="restore" style="padding: 15px">Restore original progress</button>
+    <p id="status" role="status"></p>
+    <a href="/" style="color: #e5b96b">Open the game</a>
+    <script type="module">
+      import { SAVE_KEY, emptySave, writeSave } from '../src/save.ts';
+      const originalKey = 'trick-or-detour.qa-original';
+      document.querySelector('#seed').onclick = () => {
+        if (sessionStorage.getItem(originalKey) === null)
+          sessionStorage.setItem(originalKey, JSON.stringify(localStorage.getItem(SAVE_KEY)));
+        const save = emptySave();
+        save.stars = Array(10).fill(3);
+        writeSave(save);
+        document.querySelector('#status').textContent =
+          'QA progress prepared. Original progress preserved.';
+      };
+      document.querySelector('#restore').onclick = () => {
+        const original = sessionStorage.getItem(originalKey);
+        if (original !== null) {
+          const value = JSON.parse(original);
+          if (value === null) localStorage.removeItem(SAVE_KEY);
+          else localStorage.setItem(SAVE_KEY, value);
+          sessionStorage.removeItem(originalKey);
+          document.querySelector('#status').textContent = 'Original progress restored.';
+        }
+      };
+    </script>
+  </body>
+</html>

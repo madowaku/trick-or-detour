@@ -1,0 +1,9 @@
+node_modules/
+dist/
+test-results/
+playwright-report/
+*.log
+.env*
+.font-build/
+.tmp/
+art/source/*.ttf
