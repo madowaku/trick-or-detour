@@ -1618,3 +1618,33 @@ button:active:not(:disabled) {
     max-height: calc(100svh - 273px);
   }
 }
+
+/* v0.1.1: playability / crowd visibility */
+.speech > text { font-size: 9px; }
+.speed-button {
+  min-height: 35px;
+  border-radius: 8px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #ffe7ad;
+  background: #3b3153;
+  border: 1px solid #d9b978;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.speed-button:focus-visible { outline: 3px solid #ffd176; outline-offset: 2px; }
+.board-frame.chapter-moonlight { background-image: linear-gradient(155deg, #1d2c5b4a, transparent 52%), url('/assets/board-forest.webp'); }
+.board-frame.chapter-candywood { background-image: linear-gradient(130deg, #6e365342, transparent 64%), url('/assets/board-forest.webp'); }
+.board-frame.chapter-mistwood { background-image: linear-gradient(150deg, #244e6580, #0d27331f 60%), url('/assets/board-forest.webp'); }
+.board-frame.chapter-pumpkin { background-image: linear-gradient(170deg, #d66d2255, #48254c22 65%), url('/assets/board-forest.webp'); }
+@media (max-width: 760px) {
+  body[data-screen='game'] .site-header { height: 47px; }
+  body[data-screen='game'] .game-screen { padding-top: 6px; padding-bottom: 8px; }
+  body[data-screen='game'] .mobile-stage-heading { padding-bottom: 6px; }
+  body[data-screen='game'] .game-hud { padding: 6px 10px; }
+  body[data-screen='game'] .board-top-label { display: none; }
+  body[data-screen='game'] #forest-map { max-height: calc(100svh - 208px); }
+  body[data-screen='game'] .tool-caption { min-height: 25px; padding: 3px; }
+  body[data-screen='game'] .play-bottom { align-items: center; gap: 8px; margin-top: 5px; font-size: 10px; }
+}
