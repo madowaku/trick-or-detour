@@ -2,7 +2,7 @@ import './fonts.css';
 import '@fontsource/cormorant-garamond/latin-500.css';
 import '@fontsource/cormorant-garamond/latin-600.css';
 import './style.css';
-import { Game } from './engine';
+import { Game, SIGN_COOLDOWN } from './engine';
 import { STAGES, type KidType } from './stages';
 import { loadSave, writeSave, unlocked } from './save';
 import { Sound } from './audio';
@@ -31,6 +31,8 @@ let modal: 'settings' | 'help' | null = null,
   lastTime = 0,
   accumulator = 0;
 let savedSuccessfully = true;
+const GAME_SPEEDS = [0.7, 1] as const;
+let speedIndex = 0; // Slower is the default; full-speed play is opt-in.
 const t = (ja: string, en: string) => text(save.language, ja, en);
 const persist = () => {
   savedSuccessfully = writeSave(save);
@@ -75,7 +77,7 @@ function cast() {
 }
 function gameScreen() {
   const stage = game!.stage;
-  return `${header(true)}<main class="game-screen"><aside class="game-sidebar"><button class="text-button" data-action="stages">${icon('back')}${t('ステージ一覧', 'All stages')}</button><p class="eyebrow">IN THE WITCH’S WOODS</p><div class="stage-heading"><span>STAGE ${String(stage.id).padStart(2, '0')}</span><h1>${stage.title[save.language === 'ja' ? 0 : 1]}</h1></div><p class="stage-hint">${stage.hint[save.language === 'ja' ? 0 : 1]}</p><div class="goal-note">${icon('home')}<span>${t('家への到達', 'Visitors allowed')}<b>${stage.allowance}${t('人まで', ' or fewer')}</b></span></div><div class="cast-list"><p class="small-label">${t('今夜のお客さま', 'TONIGHT’S VISITORS')}</p>${cast()}</div><div class="witch-note">${sprite(4, '', 40)}<p>${t('倒さず、迷わせる。<br>やさしいいたずらの時間です。', 'A little lost, a little startled.<br>No one gets hurt tonight.')}</p></div><button class="quiet-button sidebar-help" data-action="help">${icon('info')}${t('あそびかた', 'How to play')}</button></aside><section class="play-area"><div class="mobile-stage-heading"><span>STAGE ${String(stage.id).padStart(2, '0')}</span><b>${stage.title[save.language === 'ja' ? 0 : 1]}</b></div><div class="game-hud"><div>${icon('ghost')}<span>${t('あと', 'LEFT')}<b id="remaining">${stage.kids.length}</b></span></div><div>${icon('check')}<span>${t('帰宅', 'HOME')}<b id="returned">0</b></span></div><div class="arrival-stat">${icon('home')}<span>${t('到達', 'ARRIVED')}<b id="arrived">0<small> / ${stage.allowance}</small></b></span></div><button class="icon-button" data-action="pause" aria-label="${t('ポーズ', 'Pause')}">${icon('pause')}</button></div><div class="board-frame"><div class="board-top-label">${icon('moon')} THE WITCH’S WOODS ${icon('star')}</div>${boardStatic(game!, save.language)}<div id="board-overlay"></div>${stage.id === 10 ? `<div class="pumpkin-king">${sprite(5, '', 72)}<span>♛</span><i class="bat">⌁</i></div>` : ''}</div><div class="tool-caption" id="tool-caption"></div><div class="game-tools"><button class="tool-button" data-tool="candy">${icon('candy')}<span>${t('お菓子', 'Candy')}<small id="candy-count">${stage.candy}</small></span></button><button class="tool-button" data-tool="ghost">${icon('ghost')}<span>${t('おばけ', 'Ghost')}<small id="ghost-count">${stage.ghosts}</small></span></button><button class="tool-button restart-button" data-action="restart">${icon('restart')}<span>${t('やりなおす', 'Restart')}</span></button></div><div class="play-bottom"><span>${t('看板をタップで回転', 'Tap a sign to turn it')}</span><span>${t('同じ行き止まりは一度だけ', 'Each dead end counts once')}</span></div></section></main>`;
+  return `${header(true)}<main class="game-screen"><aside class="game-sidebar"><button class="text-button" data-action="stages">${icon('back')}${t('ステージ一覧', 'All stages')}</button><p class="eyebrow">IN THE WITCH’S WOODS</p><div class="stage-heading"><span>STAGE ${String(stage.id).padStart(2, '0')}</span><h1>${stage.title[save.language === 'ja' ? 0 : 1]}</h1></div><p class="stage-hint">${stage.hint[save.language === 'ja' ? 0 : 1]}</p><div class="goal-note">${icon('home')}<span>${t('家への到達', 'Visitors allowed')}<b>${stage.allowance}${t('人まで', ' or fewer')}</b></span></div><div class="cast-list"><p class="small-label">${t('今夜のお客さま', 'TONIGHT’S VISITORS')}</p>${cast()}</div><div class="witch-note">${sprite(4, '', 40)}<p>${t('倒さず、迷わせる。<br>やさしいいたずらの時間です。', 'A little lost, a little startled.<br>No one gets hurt tonight.')}</p></div><button class="quiet-button sidebar-help" data-action="help">${icon('info')}${t('あそびかた', 'How to play')}</button></aside><section class="play-area"><div class="mobile-stage-heading"><span>STAGE ${String(stage.id).padStart(2, '0')}</span><b>${stage.title[save.language === 'ja' ? 0 : 1]}</b></div><div class="game-hud"><div>${icon('ghost')}<span>${t('あと', 'LEFT')}<b id="remaining">${stage.kids.length}</b></span></div><div>${icon('check')}<span>${t('帰宅', 'HOME')}<b id="returned">0</b></span></div><div class="arrival-stat">${icon('home')}<span>${t('到達', 'ARRIVED')}<b id="arrived">0<small> / ${stage.allowance}</small></b></span></div><button class="icon-button" data-action="pause" aria-label="${t('ポーズ', 'Pause')}">${icon('pause')}</button></div><div class="board-frame ${stage.id <= 3 ? 'chapter-moonlight' : stage.id <= 6 ? 'chapter-candywood' : stage.id <= 9 ? 'chapter-mistwood' : 'chapter-pumpkin'}"><div class="board-top-label">${icon('moon')} THE WITCH’S WOODS ${icon('star')}</div>${boardStatic(game!, save.language)}<div id="board-overlay"></div>${stage.id === 10 ? `<div class="pumpkin-king">${sprite(5, '', 72)}<span>♛</span><i class="bat">⌁</i></div>` : ''}</div><div class="tool-caption" id="tool-caption"></div><div class="game-tools"><button class="tool-button" data-tool="candy">${icon('candy')}<span>${t('お菓子', 'Candy')}<small id="candy-count">${stage.candy}</small></span></button><button class="tool-button" data-tool="ghost">${icon('ghost')}<span>${t('おばけ', 'Ghost')}<small id="ghost-count">${stage.ghosts}</small></span></button><button class="tool-button restart-button" data-action="restart">${icon('restart')}<span>${t('やりなおす', 'Restart')}</span></button></div><div class="play-bottom"><span>${t('看板はタップで即回転', 'Tap a sign for a quick turn')}</span><button type="button" class="speed-button" data-action="speed" aria-label="${t('ゲームの速度を変える', 'Change game speed')}">${t('速度', 'Speed')} ×${GAME_SPEEDS[speedIndex]}</button></div></section></main>`;
 }
 function readyOverlay() {
   return `<div class="ready-note"><p>${t('まずは、看板の向きを決めよう。', 'Set your signs before the visitors arrive.')}</p><small>${game!.stage.hint[save.language === 'ja' ? 0 : 1]}</small><button class="primary-button" data-action="start">${icon('play')}${t('森へご案内！', 'Let them in!')}</button></div><span class="prep-label">${t('準備中 · 看板は自由に回せるよ', 'PREPARATION · Turn signs freely')}</span>`;
@@ -124,7 +126,7 @@ function drawGame() {
   const signature = JSON.stringify([
     game.signs,
     game.phase,
-    Object.keys(game.signs).map((id) => current.tick - current.lastTurn[id] < 36),
+    Object.keys(game.signs).map((id) => current.tick - current.lastTurn[id] < SIGN_COOLDOWN),
   ]);
   if (signLayer.dataset.signature !== signature) {
     const focusId = document.activeElement?.getAttribute('data-node');
@@ -246,6 +248,12 @@ function handleAction(action: string) {
       accumulator = 0;
       updateSound();
       drawGame();
+      break;
+    case 'speed':
+      speedIndex = (speedIndex + 1) % GAME_SPEEDS.length;
+      document.querySelector<HTMLButtonElement>('.speed-button')!.textContent =
+        `${t('速度', 'Speed')} ×${GAME_SPEEDS[speedIndex]}`;
+      accumulator = 0;
       break;
     case 'restart':
       if (game) begin(game.stage.id);
@@ -386,7 +394,7 @@ function frame(now: number) {
   const delta = lastTime ? Math.min(250, now - lastTime) : 0;
   lastTime = now;
   if (game?.phase === 'playing') {
-    accumulator += delta;
+    accumulator += delta * GAME_SPEEDS[speedIndex];
     while (accumulator >= 1000 / 60 && game.phase === 'playing') {
       game.step();
       accumulator -= 1000 / 60;
