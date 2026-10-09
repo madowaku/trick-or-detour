@@ -1,4 +1,4 @@
-import { EDGE_TICKS, type Game, type Kid } from './engine';
+import { EDGE_TICKS, SIGN_COOLDOWN, type Game, type Kid } from './engine';
 import type { MapNode } from './stages';
 import type { Language } from './save';
 const root = import.meta.env.BASE_URL;
@@ -103,7 +103,7 @@ export function signs(game: Game, language: Language) {
           : target.kind === 'home'
             ? text(language, '魔女の家', 'cottage')
             : text(language, '奥の分岐', 'next junction');
-      const cooling = game.phase === 'playing' && game.tick - game.lastTurn[id] < 36;
+      const cooling = game.phase === 'playing' && game.tick - game.lastTurn[id] < SIGN_COOLDOWN;
       return `<g class="sign-button ${cooling ? 'cooling' : ''}" data-node="${id}" role="button" tabindex="0" aria-label="${text(language, '看板', 'Sign')} ${id}: ${destination}" aria-disabled="${!['ready', 'playing'].includes(game.phase)}" transform="translate(${node.x} ${node.y - 8})"><circle r="39" class="sign-halo"/><rect x="-5" y="-4" width="10" height="41" rx="3" fill="#836040" stroke="#493624" stroke-width="2"/><g class="arrow-plank ${recent ? 'turning' : ''}" style="--from:${previousAngle}deg;--to:${clockwiseAngle}deg;transform:rotate(${clockwiseAngle}deg)"><path d="M-32-17H13L36 0 13 17h-45Z" fill="#ebbd75" stroke="#654328" stroke-width="3"/><path d="M-25-12H11L28 0 11 12h-36" fill="none" stroke="#ffdc98" stroke-width="1.5"/><path d="M-20-4H9v-6L23 0 9 10V4h-29Z" fill="#704328"/><path d="M-27 9h14M-24-8h9" stroke="#b37c47" stroke-width="1"/></g><circle cx="0" cy="0" r="3" fill="#efdbaf"/><circle r="39" fill="transparent"/></g>`;
     })
     .join('');
@@ -118,16 +118,37 @@ const messages: Record<string, [string, string]> = {
   treat: ['お菓子ちょうだい！', 'Trick or treat!'],
 };
 export function children(game: Game, language: Language) {
-  return game.kids
+  const active = game.kids
     .filter((kid) => kid.state !== 'resolved')
-    .sort((a, b) => position(game, a).y - position(game, b).y || a.id - b.id)
-    .map((kid) => {
-      const p = position(game, kid),
-        index = kid.type === 'normal' ? 0 : kid.type === 'sweet' ? 1 : 2;
+    .sort((a, b) => position(game, a).y - position(game, b).y || a.id - b.id);
+  // Same-type children very close to one another share a visible token.
+  // Simulation state is untouched; all kids still travel independently.
+  const clusters: Array<{ kid: Kid; count: number }> = [];
+  for (const kid of active) {
+    const p = position(game, kid);
+    const close = clusters.find(({ kid: other }) => {
+      const q = position(game, other);
+      return other.type === kid.type && other.travel === kid.travel &&
+        Math.hypot(p.x - q.x, p.y - q.y) < 26;
+    });
+    if (close) close.count++;
+    else clusters.push({ kid, count: 1 });
+  }
+  return clusters
+    .map(({ kid, count }) => {
+      const p = position(game, kid);
+      const nearby = clusters.filter(({ kid: other }) => {
+        const q = position(game, other);
+        return Math.hypot(p.x - q.x, p.y - q.y) < 44;
+      });
+      const laneIndex = nearby.findIndex(({ kid: other }) => other.id === kid.id);
+      const lane = nearby.length > 1 ? (laneIndex - (nearby.length - 1) / 2) * 25 : 0;
+      const index = kid.type === 'normal' ? 0 : kid.type === 'sweet' ? 1 : 2;
       const returning =
         kid.travel === 'return' || (kid.afterWait === 'return' && kid.state === 'waiting');
       const message = kid.messageUntil > game.tick ? messages[kid.message] : undefined;
-      return `<g class="kid ${returning ? 'returning' : ''}" transform="translate(${p.x} ${p.y})" data-kid="${kid.id}"><ellipse cy="8" rx="17" ry="7" fill="#081b18" opacity=".4"/><g class="kid-art ${kid.state === 'moving' ? 'walking' : ''}" transform="translate(-36 -63)">${sprite(index, '', 72)}</g>${Array.from({ length: kid.tolerance }, (_, i) => `<circle cx="${(i - (kid.tolerance - 1) / 2) * 11}" cy="17" r="3.5" fill="${i < kid.confusion ? '#f7c366' : '#294338'}" stroke="#e7d5aa" stroke-width="1"/>`).join('')}${message ? `<g class="speech"><rect x="-52" y="-87" width="104" height="24" rx="12"/><text y="-71">${text(language, ...message)}</text></g>` : ''}</g>`;
+      const countLabel = count > 1 ? '<g class="kid-stack"><circle cx="22" cy="-34" r="13" fill="#432448" stroke="#f8d68c" stroke-width="2"/><text x="22" y="-30" text-anchor="middle" font-size="12" font-weight="bold" fill="#fff5d5">×' + count + '</text></g>' : '';
+      return `<g class="kid ${returning ? 'returning' : ''}" transform="translate(${p.x + lane} ${p.y})" data-kid="${kid.id}"><ellipse cy="7" rx="13" ry="6" fill="#081b18" opacity=".4"/><g class="kid-art ${kid.state === 'moving' ? 'walking' : ''}" transform="translate(-24 -43)">${sprite(index, '', 48)}</g>${Array.from({ length: kid.tolerance }, (_, i) => `<circle cx="${(i - (kid.tolerance - 1) / 2) * 11}" cy="17" r="3.5" fill="${i < kid.confusion ? '#f7c366' : '#294338'}" stroke="#e7d5aa" stroke-width="1"/>`).join('')}${countLabel}${message && nearby.length === 1 ? `<g class="speech"><rect x="-43" y="-67" width="86" height="19" rx="10"/><text y="-54">${text(language, ...message)}</text></g>` : ''}</g>`;
     })
     .join('');
 }
