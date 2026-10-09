@@ -144,12 +144,12 @@ const definitions: Array<
   [
     ['看板どろぼう', 'Mischief makers'],
     [
-      '緑のいたずらっ子は、看板を回してから進む！',
-      'Green pranksters turn the sign before choosing a path!',
+      '最初に看板を1回回そう。いたずらっ子が次の子を案内するよ！',
+      'Turn the sign once before starting. The prankster will redirect the others!',
     ],
     'B',
-    [n, p, n, p],
-    2,
+    [n, p, n],
+    1,
     180,
     0,
     0,
