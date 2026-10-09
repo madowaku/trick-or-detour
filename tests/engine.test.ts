@@ -138,7 +138,15 @@ describe('deterministic forest simulation', () => {
         .map((e) => e.kid),
     ).toEqual([0, 1]);
   });
-  it('enforces 0.6 second tap spacing, and disables input during pause', () => {
+  it('stage five teaches the prank chain with one preparation turn', () => {
+    const game = new Game(STAGES[4]);
+    game.turn('J');
+    run(game);
+    expect(game.phase).toBe('won');
+    expect(game.arrived).toBe(0);
+    expect(game.events.filter((event) => event.kind === 'prank')).toHaveLength(1);
+  });
+  it('enforces 0.15 second tap spacing, and disables input during pause', () => {
     const game = new Game(STAGES[0]);
     game.start();
     expect(game.turn('J')).toBe(true);

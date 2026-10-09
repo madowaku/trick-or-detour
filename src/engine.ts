@@ -1,7 +1,7 @@
 import type { Stage, KidType } from './stages';
 export const TICKS_PER_SECOND = 60;
 export const EDGE_TICKS = 84;
-export const SIGN_COOLDOWN = 36;
+export const SIGN_COOLDOWN = 9;
 export type Phase = 'ready' | 'playing' | 'paused' | 'won' | 'lost';
 type Travel = 'forward' | 'backtrack' | 'bounce' | 'return';
 export interface Kid {
