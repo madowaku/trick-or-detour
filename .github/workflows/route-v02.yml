@@ -1,0 +1,23 @@
+name: Route defense v0.2 validation
+on:
+  push:
+    branches: [feat/route-defense-v0.2-prototype]
+  pull_request:
+    paths:
+      - 'public/route-v02.*'
+      - 'tests/route-v02.test.mjs'
+      - 'src/main.ts'
+      - '.github/workflows/route-v02.yml'
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run verify
+      - run: node --test tests/route-v02.test.mjs
+      - run: node --check public/route-v02.js
