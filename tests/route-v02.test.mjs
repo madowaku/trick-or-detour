@@ -1,4 +1,4 @@
-import test from 'node:test';
+import {test} from 'vitest';
 import assert from 'node:assert/strict';
 import {RouteGame,ROUTE_STAGES,EDGE_TICKS} from '../public/route-v02.js';
 
