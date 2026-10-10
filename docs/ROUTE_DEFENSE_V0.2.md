@@ -11,7 +11,7 @@ To run:
 ~~~sh
 npm ci
 npm run dev -- --port 5174
-node --test tests/route-v02.test.mjs
+npm run test
 npm run verify
 ~~~
 
