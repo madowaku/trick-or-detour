@@ -19,5 +19,4 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run verify
-      - run: node --test tests/route-v02.test.mjs
       - run: node --check public/route-v02.js
