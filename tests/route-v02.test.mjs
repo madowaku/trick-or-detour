@@ -52,7 +52,7 @@ test('stage 003: staggered departures, shared signs, and two loops',()=>{
   game.turn('J'); // point final junction to exit
   game.start();
   game.step(590); // all three children have passed A the first time
-  game.turn('A'); // A -> J for first child, now homesick
+  game.turn('A');game.turn('A'); // B -> D -> J for first child, now homesick
   game.step(80); // child 1 entered J route
   game.turn('A');game.turn('A'); // A -> D for child 2, still wants candy
   game.step(230);
@@ -75,7 +75,7 @@ test('simulation is deterministic for the same set of actions',()=>{
     const g=new RouteGame(ROUTE_STAGES[2]);
     g.turn('A');g.turn('J');g.start();
     for(let i=0;i<2500&&g.phase==='playing';i++){
-      if(i===589)g.turn('A');
+      if(i===589){g.turn('A');g.turn('A');}
       if(i===669){g.turn('A');g.turn('A');}
       if(i===899)g.turn('A');
       g.step();
