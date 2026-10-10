@@ -1648,3 +1648,19 @@ button:active:not(:disabled) {
   body[data-screen='game'] .tool-caption { min-height: 25px; padding: 3px; }
   body[data-screen='game'] .play-bottom { align-items: center; gap: 8px; margin-top: 5px; font-size: 10px; }
 }
+
+/* v0.2 optional route-defense experiment link; classic progress remains untouched. */
+.route-v02-link {
+  display: block;
+  text-align: center;
+  text-decoration: none;
+  background: #754266;
+  color: #fff4d5;
+  border: 1px solid #f5c883;
+  border-radius: 10px;
+  padding: 12px 8px;
+  font-size: 13px;
+  font-weight: 700;
+}
+.route-v02-link:hover { filter: brightness(1.15); }
+.route-v02-link:focus-visible { outline: 3px solid #ffdc89; outline-offset: 2px; }
